@@ -3,6 +3,7 @@ import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
+import ChatBox from "../components/ChatBox";
 import RoomJoinedUserList from "../components/RoomJoinedUserList";
 import { joinRoom } from "../store/modules/roomSlice";
 import useSocket from "../hooks/useSocket";
@@ -43,10 +44,13 @@ const Room = () => {
     <div>
       <h3>방제: {rooms.currentRoom?.roomTitle}</h3>
       <h4>주인: {rooms.currentRoom?.hostId}</h4>
-      <RoomJoinedUserList
-        hostId={rooms.currentRoom?.hostId ?? ""}
-        userList={currentConnectedUsers}
-      />
+      <div style={{ display: "flex", gridColumnGap: "20px" }}>
+        <RoomJoinedUserList
+          hostId={rooms.currentRoom?.hostId ?? ""}
+          userList={currentConnectedUsers}
+        />
+        {rooms.currentRoom && <ChatBox room={rooms.currentRoom} />}
+      </div>
     </div>
   );
 };

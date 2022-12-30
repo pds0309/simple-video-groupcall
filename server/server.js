@@ -36,6 +36,16 @@ io.on("connection", (socket) => {
     console.log("유저가 방을 나감");
     disconnectHandler(socket);
   });
+
+  socket.on("send-chat", (message, room) => {
+    const currentUser = connectedUserList.find(
+      (user) => user.socketId === socket.id
+    );
+    io.to(room.roomId).emit("receive-chat", {
+      userNickname: currentUser.userNickname,
+      message: message,
+    });
+  });
 });
 
 server.listen(PORT, () => {
@@ -104,6 +114,7 @@ const joinRoomHandler = (data, socket) => {
     connectedUserList: room.connectedUserList,
     currentRoom: room,
   });
+  io.to(roomId).emit("user-connected", { currentUser: newUser });
   socket.broadcast.emit("rooms-all", { data: roomList });
   console.log("방 참가", roomId + "에", data.userNickname + "님이 입장");
 };
@@ -135,7 +146,7 @@ const disconnectHandler = (socket) => {
       room.hostNickname = room.connectedUserList[0].userNickname;
       roomList = roomList.map((rm) => (rm.roomId === room.roomId ? room : rm));
     }
-    io.to(room.roomId).emit("user-disconnected", { socketId: socket.id });
+    io.to(room.roomId).emit("user-disconnected", { currentUser });
     io.to(room.roomId).emit("room-update", {
       connectedUserList: room.connectedUserList,
       currentRoom: room,

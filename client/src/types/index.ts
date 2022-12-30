@@ -13,3 +13,9 @@ export interface UserType {
   socketId: string;
   roomId: string;
 }
+
+export interface ChatType {
+  userNickname: string;
+  type: "chat" | "noti";
+  chat: string;
+}
