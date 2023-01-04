@@ -36,9 +36,12 @@ const useSocket = () => {
     socket?.emit(event, ...args);
   };
 
-  const on = (event: string, callback: (...args: any[]) => void) => {
-    socket?.on(event, callback);
-  };
+  const on = useCallback(
+    (event: string, callback: (...args: any[]) => void) => {
+      socket?.on(event, callback);
+    },
+    [socket]
+  );
 
   const off = (event: string) => {
     socket?.off(event);

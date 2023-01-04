@@ -19,6 +19,7 @@ const RoomSubmit = () => {
       maxCount: maxCount,
       hostId: socket.id,
       hostNickname: userNickname,
+      connectedUserList: [],
     };
     emit("create-room", newRoom);
     on("room-id", (data) => {
