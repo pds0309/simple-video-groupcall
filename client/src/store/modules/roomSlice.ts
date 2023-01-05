@@ -21,9 +21,18 @@ const roomSlice = createSlice({
     updateAllRooms: (state, action) => {
       state.allRooms = action.payload;
     },
+    setConnectedUserList: (state, action) => {
+      if (state.currentRoom) {
+        state.currentRoom = {
+          ...state.currentRoom,
+          connectedUserList: action.payload,
+        };
+      }
+    },
   },
 });
 
-export const { joinRoom, updateAllRooms } = roomSlice.actions;
+export const { joinRoom, updateAllRooms, setConnectedUserList } =
+  roomSlice.actions;
 
 export default roomSlice;

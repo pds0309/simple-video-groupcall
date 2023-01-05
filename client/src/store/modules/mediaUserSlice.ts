@@ -3,7 +3,7 @@ import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 import { Socket } from "socket.io-client";
 
 type InitialStateType = {
-  userId: number | undefined;
+  userId: string | undefined;
   userNickname: string;
   socket: Socket | undefined;
 };
@@ -21,9 +21,13 @@ const mediaUserSlice = createSlice({
     initSocket: (state, action) => {
       state.socket = action.payload;
     },
+    setUserInfo: (state, action) => {
+      state.userId = action.payload.userId;
+      state.userNickname = action.payload.userNickname;
+    },
   },
 });
 
-export const { initSocket } = mediaUserSlice.actions;
+export const { initSocket, setUserInfo } = mediaUserSlice.actions;
 
 export default mediaUserSlice;
