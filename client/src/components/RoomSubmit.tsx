@@ -1,6 +1,8 @@
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+
 import { RoomType } from "../types";
 import { setUserInfo } from "../store/modules/mediaUserSlice";
-import { useAppDispatch } from "../store/hooks";
+import { updateAllRooms } from "../store/modules/roomSlice";
 import { useNavigate } from "react-router-dom";
 import useSocket from "../hooks/useSocket";
 import { useState } from "react";
@@ -10,6 +12,7 @@ const RoomSubmit = () => {
   const { socket, emit, on } = useSocket();
   const [roomTitle, setRoomTitle] = useState<string>("");
   const [userNickname, setUserNickname] = useState<string>("");
+  const rooms = useAppSelector((state) => state.rooms);
   const dispatch = useAppDispatch();
   const maxCount = 5;
 
@@ -25,10 +28,11 @@ const RoomSubmit = () => {
       connectedUserList: [],
     };
     emit("create-room", newRoom);
-    on("room-id", (data) => {
-      if (data.roomId) {
+    on("room-id", ({ newRoom }) => {
+      if (newRoom.roomId) {
         dispatch(setUserInfo({ userNickname, userId: socket.id }));
-        navigate("/room/" + data.roomId);
+        dispatch(updateAllRooms(rooms.allRooms.concat(newRoom)));
+        navigate("/room/" + newRoom.roomId);
       }
     });
   };

@@ -1,21 +1,29 @@
+import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { useEffect, useState } from "react";
 
 import { RoomType } from "../types";
+import { setUserInfo } from "../store/modules/mediaUserSlice";
 import styled from "styled-components";
+import { updateAllRooms } from "../store/modules/roomSlice";
 import { useNavigate } from "react-router";
 import useSocket from "../hooks/useSocket";
 
 const RoomList = () => {
   const navigate = useNavigate();
-  const { on } = useSocket();
-  const [rooms, setRooms] = useState<RoomType[]>([]);
+  const { socket, on } = useSocket();
+  const rooms = useAppSelector((state) => state.rooms);
   const [name, setName] = useState<string>("");
+  const dispatch = useAppDispatch();
   useEffect(() => {
-    on("rooms-all", ({ data }) => setRooms(data));
-  }, [on]);
+    on("rooms-all", ({ data }) => {
+      console.log(data);
+      dispatch(updateAllRooms(data));
+    });
+  }, [on, dispatch]);
 
   const handleLinkClick = (room: RoomType) => {
-    navigate("/room/" + room.roomId + "?nickname=" + name);
+    dispatch(setUserInfo({ userNickname: name, userId: socket?.id }));
+    navigate("/room/" + room.roomId);
   };
 
   return (
@@ -29,7 +37,7 @@ const RoomList = () => {
       />
       <br />
       <RoomListLayout>
-        {rooms.map((room) => (
+        {rooms.allRooms.map((room) => (
           <RoomCard key={room.roomId}>
             <button onClick={() => handleLinkClick(room)}>들가기</button>
             <p>방장: {room.hostNickname}</p>

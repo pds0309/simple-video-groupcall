@@ -1,7 +1,6 @@
 const express = require("express");
 const cors = require("cors");
 const http = require("http");
-const { rooms, users } = require("./constants");
 const PORT = process.env.PORT || 8080;
 const app = express();
 const server = http.createServer(app);
@@ -21,11 +20,21 @@ io.on("connection", (socket) => {
   socket.emit("welcome");
   welcomeEmitRoomList(socket);
 
+  socket.on("disconnect", () => {
+    disconnectHandler(socket);
+    console.log("연결끊김");
+  });
+
   socket.on("create-room", (room) => {
     createRoomHandler(room, socket);
   });
   socket.on("enter-room", (data) => {
     joinRoomHandler(data, socket);
+  });
+
+  socket.on("leave-room", () => {
+    console.log("유저가 방을 나감");
+    disconnectHandler(socket);
   });
 });
 
@@ -33,8 +42,8 @@ server.listen(PORT, () => {
   console.log(`Server is listening on ${PORT}`);
 });
 
-let roomList = rooms().getList();
-let connectedUserList = users().getList();
+let roomList = [];
+let connectedUserList = [];
 
 const createRoomHandler = (room, socket) => {
   const roomId = uuidv4();
@@ -57,8 +66,11 @@ const createRoomHandler = (room, socket) => {
   connectedUserList = [...connectedUserList, newUser];
 
   socket.join(roomId);
-  socket.emit("room-id", { roomId });
-  socket.emit("room-update", { connectedUserList: newRoom.connectedUserList });
+  socket.emit("room-id", { newRoom });
+  socket.emit("room-update", {
+    connectedUserList: newRoom.connectedUserList,
+    currentRoom: newRoom,
+  });
   console.log("방 생성됨", roomId);
   socket.broadcast.emit("rooms-all", { data: roomList });
 };
@@ -73,7 +85,7 @@ const joinRoomHandler = (data, socket) => {
   };
 
   const room = roomList.find((room) => room.roomId === roomId);
-  if (socket.id !== room.hostId) {
+  if (socket.id !== room?.hostId) {
     room.connectedUserList = [...room.connectedUserList, newUser];
     connectedUserList = [...connectedUserList, newUser];
     socket.join(roomId);
@@ -90,9 +102,46 @@ const joinRoomHandler = (data, socket) => {
   });
   io.to(roomId).emit("room-update", {
     connectedUserList: room.connectedUserList,
+    currentRoom: room,
   });
   socket.broadcast.emit("rooms-all", { data: roomList });
   console.log("방 참가", roomId + "에", data.userNickname + "님이 입장");
+};
+
+const disconnectHandler = (socket) => {
+  const currentUser = connectedUserList.find(
+    (user) => user.socketId === socket.id
+  );
+  if (!currentUser) {
+    console.log("user was not in room!");
+    return;
+  }
+
+  const room = roomList.find((room) => room.roomId === currentUser.roomId);
+  if (!room) {
+    return;
+  }
+  room.connectedUserList =
+    room?.connectedUserList.filter((user) => user.socketId !== socket.id) ?? [];
+  socket.leave(currentUser.roomId);
+  console.log(room.roomId, "방을 ", currentUser.userNickname, "님 이 퇴장");
+  // 마지막 녀석이면 방 파괴
+  if (room.connectedUserList.length === 0) {
+    roomList = roomList.filter((rm) => rm.roomId !== room.roomId);
+  } else {
+    // 나간애가 방장이면 위임
+    if (room.hostId === currentUser.userId) {
+      room.hostId = room.connectedUserList[0].userId;
+      room.hostNickname = room.connectedUserList[0].userNickname;
+      roomList = roomList.map((rm) => (rm.roomId === room.roomId ? room : rm));
+    }
+    io.to(room.roomId).emit("user-disconnected", { socketId: socket.id });
+    io.to(room.roomId).emit("room-update", {
+      connectedUserList: room.connectedUserList,
+      currentRoom: room,
+    });
+  }
+  socket.broadcast.emit("rooms-all", { data: roomList });
 };
 
 const welcomeEmitRoomList = (socket) => {

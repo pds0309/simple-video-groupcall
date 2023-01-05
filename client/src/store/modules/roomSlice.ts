@@ -12,7 +12,7 @@ const initialState: InitialStateType = {
 };
 
 const roomSlice = createSlice({
-  name: "mediaUser",
+  name: "rooms",
   initialState,
   reducers: {
     joinRoom: (state, action) => {
