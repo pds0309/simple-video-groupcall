@@ -1,9 +1,11 @@
 import { combineReducers, configureStore } from "@reduxjs/toolkit";
 
 import mediaUserSlice from "./modules/mediaUserSlice";
+import roomSlice from "./modules/roomSlice";
 
 const rootReducer = combineReducers({
   mediaUser: mediaUserSlice.reducer,
+  rooms: roomSlice.reducer,
 });
 
 export const store = configureStore({

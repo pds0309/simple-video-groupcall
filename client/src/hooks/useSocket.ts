@@ -1,19 +1,11 @@
-import { Socket, io } from "socket.io-client";
-import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { useCallback, useEffect, useState } from "react";
 
-import { initSocket } from "../store/modules/mediaUserSlice";
+import { Socket } from "socket.io-client";
+import { useAppSelector } from "../store/hooks";
 
 const useSocket = () => {
   const mediaUser = useAppSelector((state) => state.mediaUser);
   const [socket, setSocket] = useState<Socket>();
-  const dispatch = useAppDispatch();
-  useEffect(() => {
-    if (!mediaUser.socket) {
-      dispatch(initSocket(io("http://localhost:8080")));
-      return;
-    }
-  }, [dispatch, mediaUser.socket]);
 
   useEffect(() => {
     if (mediaUser.socket) {
@@ -32,13 +24,19 @@ const useSocket = () => {
   }, [socket]);
 
   // TODO: add exception handling
-  const emit = (event: string, ...args: any[]) => {
-    socket?.emit(event, ...args);
-  };
+  const emit = useCallback(
+    (event: string, ...args: any[]) => {
+      socket?.emit(event, ...args);
+    },
+    [socket]
+  );
 
-  const on = (event: string, callback: (...args: any[]) => void) => {
-    socket?.on(event, callback);
-  };
+  const on = useCallback(
+    (event: string, callback: (...args: any[]) => void) => {
+      socket?.on(event, callback);
+    },
+    [socket]
+  );
 
   const off = (event: string) => {
     socket?.off(event);
